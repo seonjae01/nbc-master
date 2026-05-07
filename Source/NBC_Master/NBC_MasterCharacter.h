@@ -10,7 +10,6 @@
 class USpringArmComponent;
 class UCameraComponent;
 class UInputAction;
-class AWeaponBase;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
@@ -50,6 +49,28 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Input")
 	UInputAction* MouseLookAction;
 
+	/** Aim Input Action */
+	UPROPERTY(EditAnywhere, Category="Input")
+	UInputAction* AimAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Aim")
+	float DefaultArmLength;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Aim")
+	float AimArmLength;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Aim")
+	float DefaultFOV;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Aim")
+	float AimFOV;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Aim")
+	float AimInterpSpeed;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+	bool bIsAiming;
+
 public:
 
 	/** Constructor */
@@ -57,6 +78,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
 
 	/** Initialize input action bindings */
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -87,6 +109,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoJumpEnd();
 
+	/** Handles aim pressed inputs from either controls or UI interfaces */
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void DoAimStart();
+
+	/** Handles aim released inputs from either controls or UI interfaces */
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void DoAimStop();
+
 public:
 
 	/** Returns CameraBoom subobject **/
@@ -94,14 +124,4 @@ public:
 
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
-
-public:
-	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
-	TSubclassOf<AWeaponBase> DefaultWeaponClass;
-
-	UPROPERTY()
-	AWeaponBase* CurrentWeapon;
-
-	UFUNCTION(BlueprintCallable, Category = "Weapon")
-	void FireWeapon();
 };

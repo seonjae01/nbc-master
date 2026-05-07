@@ -12,16 +12,40 @@ class AWeaponBase : public AActor
 public:
 	AWeaponBase();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	USkeletalMeshComponent* WeaponMesh;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<USceneComponent> Root;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
-	int32 PelletCount;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
-	float SpreadAngle;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
-	float RecoilPitch;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<class UArrowComponent> FirePoint;
 
-	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	UFUNCTION(BlueprintCallable)
 	virtual void Fire();
+
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 AmmoPerFire;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly)
+	int32 CurrentAmmo;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 MaxAmmo;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float RoF;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Range;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float DamagePerHit;
+
+	UPROPERTY(BlueprintReadWrite)
+	bool CanFire;
+
+	UPROPERTY(BlueprintReadWrite)
+	FTimerHandle TimerFireDelay;
+
+	UFUNCTION()
+	void HandleFireDelay();
 };

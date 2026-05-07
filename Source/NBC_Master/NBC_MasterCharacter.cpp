@@ -10,11 +10,12 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
-#include "Weapon/WeaponBase.h"
 #include "NBC_Master.h"
 
 ANBC_MasterCharacter::ANBC_MasterCharacter()
 {
+	PrimaryActorTick.bCanEverTick = true;
+
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
@@ -49,21 +50,32 @@ ANBC_MasterCharacter::ANBC_MasterCharacter()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character)
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+
+	DefaultArmLength = 400.0f;
+	AimArmLength = 150.0f;
+	DefaultFOV = 90.0f;
+	AimFOV = 60.0f;
+	AimInterpSpeed = 15.0f;
+	bIsAiming = false;
 }
 
 void ANBC_MasterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (DefaultWeaponClass)
-	{
-		CurrentWeapon = GetWorld()->SpawnActor<AWeaponBase>(DefaultWeaponClass);
-		if (CurrentWeapon)
-		{
-			CurrentWeapon->SetOwner(this);
-			CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("spine_05"));
-		}
-	}
+	CameraBoom->TargetArmLength = DefaultArmLength;
+	FollowCamera->SetFieldOfView(DefaultFOV);
+}
+
+void ANBC_MasterCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	float TargetArmLength = bIsAiming ? AimArmLength : DefaultArmLength;
+	float TargetFOV = bIsAiming ? AimFOV : DefaultFOV;
+
+	CameraBoom->TargetArmLength = FMath::FInterpTo(CameraBoom->TargetArmLength, TargetArmLength, DeltaTime, AimInterpSpeed);
+	FollowCamera->SetFieldOfView(FMath::FInterpTo(FollowCamera->FieldOfView, TargetFOV, DeltaTime, AimInterpSpeed));
 }
 
 void ANBC_MasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -81,6 +93,10 @@ void ANBC_MasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ANBC_MasterCharacter::Look);
+
+		// Aiming
+		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Started, this, &ANBC_MasterCharacter::DoAimStart);
+		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Completed, this, &ANBC_MasterCharacter::DoAimStop);
 	}
 	else
 	{
@@ -148,10 +164,12 @@ void ANBC_MasterCharacter::DoJumpEnd()
 	StopJumping();
 }
 
-void ANBC_MasterCharacter::FireWeapon()
+void ANBC_MasterCharacter::DoAimStart()
 {
-	if (CurrentWeapon)
-	{
-		CurrentWeapon->Fire();
-	}
+	bIsAiming = true;
+}
+
+void ANBC_MasterCharacter::DoAimStop()
+{
+	bIsAiming = false;
 }
